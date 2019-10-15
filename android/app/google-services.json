@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1085282642470",
+    "firebase_url": "https://tracking-dearest.firebaseio.com",
+    "project_id": "tracking-dearest",
+    "storage_bucket": "tracking-dearest.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1085282642470:android:246585ae0b6bafe278d4e7",
+        "android_client_info": {
+          "package_name": "com.solstella.findingdearest.whereabouts"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1085282642470-rp674ocm18krj9cj2imv41cvuqgj24og.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.solstella.findingdearest.whereabouts",
+            "certificate_hash": "802074b733f9fb3da8a3022646713344227cd701"
+          }
+        },
+        {
+          "client_id": "1085282642470-pdh444j104pfrpiqoc8g4ie1i44cfqeo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9oIoXnCHtQHueY43-FGYaZlhS8psNsIE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1085282642470-pdh444j104pfrpiqoc8g4ie1i44cfqeo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

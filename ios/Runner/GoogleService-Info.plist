@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>1085282642470-df9jknj2nssemoscv01o6ob4o95kgcu9.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.1085282642470-df9jknj2nssemoscv01o6ob4o95kgcu9</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>1085282642470-rp674ocm18krj9cj2imv41cvuqgj24og.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyC6avH3WPLm2VuqTJOAAem_JqPRkVEor0E</string>
+	<key>GCM_SENDER_ID</key>
+	<string>1085282642470</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.solstella.findingdearest.whereabouts</string>
+	<key>PROJECT_ID</key>
+	<string>tracking-dearest</string>
+	<key>STORAGE_BUCKET</key>
+	<string>tracking-dearest.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:1085282642470:ios:65d0db35887f1a1978d4e7</string>
+	<key>DATABASE_URL</key>
+	<string>https://tracking-dearest.firebaseio.com</string>
+</dict>
+</plist>
