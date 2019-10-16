@@ -239,7 +239,7 @@ class _FireMapState extends State<FireMap> {
     // print("Starting Query");
     // Make a referece to firestore
     var ref = firestore.collection('locations').where('name',
-        isEqualTo: (username.contains("paolo")) ? "Madelyne" : "Paolo");
+        isEqualTo: (username.contains("paolo")) ? "madelyne" : "paolo");
     ref.snapshots().listen((markerData) => _updateMarker(markerData.documents));
   }
 
@@ -247,7 +247,7 @@ class _FireMapState extends State<FireMap> {
     // print("Finding Dearest");
     firestore
         .collection("users")
-        .document((username.contains("paolo") ? "Madelyne" : "Paolo"))
+        .document((username.contains("paolo") ? "madelyne" : "paolo"))
         .snapshots()
         .listen((doc) {
       var markerIdVal = "marker_id_${doc.data['name']}";
@@ -268,7 +268,7 @@ class _FireMapState extends State<FireMap> {
   _centerToDearest() async {
     firestore
         .collection("users")
-        .document((username.contains("paolo") ? "Madelyne" : "Paolo"))
+        .document((username.contains("paolo") ? "madelyne" : "paolo"))
         .get()
         .then((DocumentSnapshot document) {
       GeoPoint pos = document.data['position']['geopoint'];
