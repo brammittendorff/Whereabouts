@@ -34,7 +34,8 @@ class _FireMapState extends State<FireMap> {
   LocationData currentLocation;
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
   MarkerId selectedMarker;
-  BitmapDescriptor markerIcon;
+  int markerCount = 1;
+  List markerIconList = List();
 
   GoogleMapController mapController;
 
@@ -102,7 +103,7 @@ class _FireMapState extends State<FireMap> {
                 style: TextStyle(fontSize: 22),
               ),
             ),
-            onPressed: () => _animateToUser(),
+            onPressed: () => _centerToDearest(),
           ),
         )
       ],
@@ -113,21 +114,30 @@ class _FireMapState extends State<FireMap> {
   void initState() {
     //Sign in through google
     _getAssetIcon(context).whenComplete(() {
+      BitmapDescriptor markerIconUser = (username.contains("Paolo"))
+          ? markerIconList.elementAt(0)
+          : markerIconList.elementAt(1);
+      BitmapDescriptor markerIconDearest = (username.contains("Paolo"))
+          ? markerIconList.elementAt(1)
+          : markerIconList.elementAt(0);
       location.onLocationChanged().listen((location) async {
         var markerId = MarkerId('marker_id_$username');
         if (currentLocation != location && currentLocation != null) {
           setState(() {
-            print("location changed!");
+            _addUserLocation();
+            // print("location changed!");
             markers[markerId] = Marker(
               markerId: markerId,
-              icon: markerIcon,
+              icon: markerIconUser,
               position:
                   LatLng(currentLocation.latitude, currentLocation.longitude),
             );
           });
         }
+        _findDearest(markerIconDearest);
         currentLocation = location;
       });
+      _startQuery();
     });
     super.initState();
   }
@@ -135,26 +145,137 @@ class _FireMapState extends State<FireMap> {
   void _onMapCreated(GoogleMapController controller) {
     setState(() {
       mapController = controller;
+      _animateToUser();
     });
   }
 
   _addMarker(BuildContext context) async {
     List placeDescription = await _whereaboutsDescription(context);
 
-    var markerIdVal = 'marker_id_1';
-    var markerId = MarkerId(markerIdVal);
-    var marker = Marker(
+    if (placeDescription != null) {
+      var markerIdVal = 'marker_id_$markerCount';
+      var markerId = MarkerId(markerIdVal);
+      var marker = Marker(
+          markerId: markerId,
+          position: LatLng(currentLocation.latitude, currentLocation.longitude),
+          icon: BitmapDescriptor.defaultMarker,
+          infoWindow: InfoWindow(
+              title: placeDescription.elementAt(0),
+              snippet: placeDescription.elementAt(1)));
+      setState(() {
+        markers[markerId] = marker;
+      });
+      _addGeoPoint(
+          placeDescription.elementAt(0), placeDescription.elementAt(1));
+    }
+  }
+
+  _removeMarker(MarkerId markerId) async {
+    firestore
+        .collection("locations")
+        .where('placeReason',
+            isEqualTo: markers[markerId].infoWindow.snippet.toString())
+        .getDocuments()
+        .then((snapshots) {
+      snapshots.documents.forEach((document) {
+        firestore.runTransaction((Transaction myTransaction) {
+          print("Hello");
+          return myTransaction.delete(document.reference);
+        });
+      });
+      _startQuery();
+    });
+  }
+
+  _onInfoWindowPressed(MarkerId markerId) async {
+    showDialog(
+        barrierDismissible: true,
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Remove Marker?"),
+            content: Text("Do you wish to remove you this marker?"),
+            actions: <Widget>[
+              FlatButton(
+                child: Text("Cancel"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              FlatButton(
+                  child: Text("Confirm"),
+                  onPressed: () {
+                    Navigator.of(context).pop(_removeMarker(markerId));
+                  }),
+            ],
+          );
+        });
+  }
+
+  void _updateMarker(List<DocumentSnapshot> documentList) {
+    markers.clear();
+    documentList.forEach((DocumentSnapshot document) {
+      markerCount++;
+      print(document.data['placeName']);
+      var markerIdVal = "marker_id_$markerCount";
+      var markerId = MarkerId(markerIdVal);
+      GeoPoint pos = document.data['position']['geopoint'];
+      var marker = Marker(
         markerId: markerId,
-        position: LatLng(currentLocation.latitude, currentLocation.longitude),
+        position: LatLng(pos.latitude, pos.longitude),
         icon: BitmapDescriptor.defaultMarker,
         infoWindow: InfoWindow(
-            title: placeDescription.elementAt(0),
-            snippet: placeDescription.elementAt(1)));
-
-    setState(() {
+            title: document.data['placeName'],
+            snippet: document.data['placeReason'],
+            onTap: () {
+              _onInfoWindowPressed(markerId);
+            }),
+      );
       markers[markerId] = marker;
     });
-    _addGeoPoint();
+    setState(() {});
+  }
+
+  _startQuery() async {
+    // print("Starting Query");
+    // Make a referece to firestore
+    var ref = firestore.collection('locations').where('name',
+        isEqualTo: (username.contains("Paolo")) ? "Madelyne" : "Paolo");
+    ref.snapshots().listen((markerData) => _updateMarker(markerData.documents));
+  }
+
+  _findDearest(BitmapDescriptor markerIcon) async {
+    // print("Finding Dearest");
+    firestore
+        .collection("users")
+        .document((username.contains("Paolo") ? "Madelyne" : "Paolo"))
+        .snapshots()
+        .listen((doc) {
+      var markerIdVal = "marker_id_${doc.data['name']}";
+      var markerId = MarkerId(markerIdVal);
+      GeoPoint pos = doc.data['position']['geopoint'];
+      var marker = Marker(
+          markerId: markerId,
+          icon: markerIcon,
+          position: LatLng(pos.latitude, pos.longitude),
+          infoWindow: InfoWindow.noText);
+
+      setState(() {
+        markers[markerId] = marker;
+      });
+    });
+  }
+
+  _centerToDearest() async {
+    firestore
+        .collection("users")
+        .document((username.contains("Paolo") ? "Madelyne" : "Paolo"))
+        .get()
+        .then((DocumentSnapshot document) {
+      GeoPoint pos = document.data['position']['geopoint'];
+      mapController.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+          target: LatLng(pos.latitude, pos.longitude), zoom: 17.0)));
+    });
   }
 
   _animateToUser() async {
@@ -163,47 +284,55 @@ class _FireMapState extends State<FireMap> {
         target: LatLng(pos.latitude, pos.longitude), zoom: 17.0)));
   }
 
-  _findDearest() async {}
+  _addUserLocation() async {
+    GeoFirePoint point = geo.point(
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude);
+    return firestore
+        .collection('users')
+        .document(username)
+        .setData({'position': point.data});
+  }
 
-  Future<DocumentReference> _addGeoPoint() async {
+  Future<DocumentReference> _addGeoPoint(
+      String placeName, String placeReason) async {
     var pos = await location.getLocation();
     GeoFirePoint point =
         geo.point(latitude: pos.latitude, longitude: pos.longitude);
-    return firestore
-        .collection('locations')
-        .add({'position': point.data, 'name': 'Paolo Location'});
+    return firestore.collection('locations').add({
+      'position': point.data,
+      'name': username,
+      'placeName': placeName,
+      'placeReason': placeReason
+    });
   }
 
-  _startQuery() async {
-    var pos = await location.getLocation();
-    double lat = pos.latitude;
-    double lng = pos.longitude;
-
-    var ref = firestore.collection("locations");
-    GeoFirePoint center = geo.point(latitude: lat, longitude: lng);
-  }
-
-  Future<BitmapDescriptor> _getAssetIcon(BuildContext context) async {
+  Future<List> _getAssetIcon(
+    BuildContext context,
+  ) async {
     username = await loginUser.signInWithGoogle();
-    var imageType = (username.contains("Paolo"))
-        ? 'assets/dearest_marker_male.png'
-        : "assets/dearest_marker_female.png";
+    BitmapDescriptor markerIcon;
+    List userList = List();
+    userList.add('assets/dearest_marker_male.png');
+    userList.add('assets/dearest_marker_female.png');
 
-    final Completer<BitmapDescriptor> bitmapIcon =
-        Completer<BitmapDescriptor>();
-    final ImageConfiguration config = createLocalImageConfiguration(context);
-    AssetImage(imageType)
-        .resolve(config)
-        .addListener(ImageStreamListener((ImageInfo image, bool sync) async {
-      final ByteData bytes =
-          await image.image.toByteData(format: ImageByteFormat.png);
-      final BitmapDescriptor bitmap =
-          BitmapDescriptor.fromBytes(bytes.buffer.asUint8List());
-      bitmapIcon.complete(bitmap);
-    }));
-
-    markerIcon = await bitmapIcon.future;
-    return markerIcon;
+    for (int i = 0; i < 2; i++) {
+      final Completer<BitmapDescriptor> bitmapIcon =
+          Completer<BitmapDescriptor>();
+      final ImageConfiguration config = createLocalImageConfiguration(context);
+      AssetImage(userList.elementAt(i))
+          .resolve(config)
+          .addListener(ImageStreamListener((ImageInfo image, bool sync) async {
+        final ByteData bytes =
+            await image.image.toByteData(format: ImageByteFormat.png);
+        final BitmapDescriptor bitmap =
+            BitmapDescriptor.fromBytes(bytes.buffer.asUint8List());
+        bitmapIcon.complete(bitmap);
+      }));
+      markerIcon = await bitmapIcon.future;
+      markerIconList.add(markerIcon);
+    }
+    return markerIconList;
   }
 
   Future<List> _whereaboutsDescription(BuildContext context) async {
@@ -250,5 +379,11 @@ class _FireMapState extends State<FireMap> {
             ],
           );
         });
+  }
+
+  @override
+  void dispose() {
+    subscription.cancel();
+    super.dispose();
   }
 }
