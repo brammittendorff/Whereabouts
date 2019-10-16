@@ -9,7 +9,6 @@ class LoginUser {
   String name;
 
   Future<String> signInWithGoogle() async {
-
     final GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();
     final GoogleSignInAuthentication googleSignInAuthentication =
         await googleSignInAccount.authentication;
@@ -19,25 +18,34 @@ class LoginUser {
       idToken: googleSignInAuthentication.idToken,
     );
 
-  FirebaseUser user;
-    
-  if(Platform.isIOS){
-    AuthResult auth = await _auth.signInWithEmailAndPassword(email: "paolo.tolentino@gmail.com", password: "siopaolo8974");
-    FirebaseUser user = auth.user;
-  } else {
-    FirebaseUser user = (await _auth.signInWithCredential(credential)).user;
-  }
+    if (Platform.isIOS) {
+      AuthResult auth = await _auth.signInWithEmailAndPassword(
+          email: "paolo.tolentino@gmail.com", password: "siopaolo8974");
+      FirebaseUser user = auth.user;
+      assert(!user.isAnonymous);
+      assert(await user.getIdToken() != null);
 
-  assert(!user.isAnonymous);
-  assert(await user.getIdToken() != null);
+      final FirebaseUser currentUser = await _auth.currentUser();
+      assert(user.uid == currentUser.uid);
 
-  final FirebaseUser currentUser = await _auth.currentUser();
-  assert(user.uid == currentUser.uid);
+      name = user.email;
+      if (name.contains(" ")) {
+        name = name.substring(0, name.indexOf(" "));
+      }
+      return name;
+    } else {
+      FirebaseUser user = (await _auth.signInWithCredential(credential)).user;
+      assert(!user.isAnonymous);
+      assert(await user.getIdToken() != null);
 
-  name = user.email;
-  if(name.contains(" ")){
-    name = name.substring(0, name.indexOf(" "));
-  }
-  return name;
+      final FirebaseUser currentUser = await _auth.currentUser();
+      assert(user.uid == currentUser.uid);
+      print(user.email);
+      name = user.email;
+      if (name.contains(" ")) {
+        name = name.substring(0, name.indexOf(" "));
+      }
+      return name;
+    }
   }
 }

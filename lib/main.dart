@@ -239,7 +239,7 @@ class _FireMapState extends State<FireMap> {
     // print("Starting Query");
     // Make a referece to firestore
     var ref = firestore.collection('locations').where('name',
-        isEqualTo: (username.contains("paolo")) ? "madelyne" : "paolo");
+        isEqualTo: (username.contains("paolo")) ? "Madelyne" : "Paolo");
     ref.snapshots().listen((markerData) => _updateMarker(markerData.documents));
   }
 
@@ -247,7 +247,7 @@ class _FireMapState extends State<FireMap> {
     // print("Finding Dearest");
     firestore
         .collection("users")
-        .document((username.contains("paolo") ? "madelyne" : "paolo"))
+        .document((username.contains("paolo") ? "Madelyne" : "Paolo"))
         .snapshots()
         .listen((doc) {
       var markerIdVal = "marker_id_${doc.data['name']}";
@@ -268,7 +268,7 @@ class _FireMapState extends State<FireMap> {
   _centerToDearest() async {
     firestore
         .collection("users")
-        .document((username.contains("paolo") ? "madelyne" : "paolo"))
+        .document((username.contains("paolo") ? "Madelyne" : "Paolo"))
         .get()
         .then((DocumentSnapshot document) {
       GeoPoint pos = document.data['position']['geopoint'];
@@ -310,6 +310,7 @@ class _FireMapState extends State<FireMap> {
     BuildContext context,
   ) async {
     username = await loginUser.signInWithGoogle();
+    username = username.split(".").elementAt(0);
     BitmapDescriptor markerIcon;
     List userList = List();
     userList.add('assets/dearest_marker_male.png');
