@@ -114,10 +114,10 @@ class _FireMapState extends State<FireMap> {
   void initState() {
     //Sign in through google
     _getAssetIcon(context).whenComplete(() {
-      BitmapDescriptor markerIconUser = (username.contains("Paolo"))
+      BitmapDescriptor markerIconUser = (username.contains("paolo"))
           ? markerIconList.elementAt(0)
           : markerIconList.elementAt(1);
-      BitmapDescriptor markerIconDearest = (username.contains("Paolo"))
+      BitmapDescriptor markerIconDearest = (username.contains("paolo"))
           ? markerIconList.elementAt(1)
           : markerIconList.elementAt(0);
       location.onLocationChanged().listen((location) async {
@@ -179,7 +179,6 @@ class _FireMapState extends State<FireMap> {
         .then((snapshots) {
       snapshots.documents.forEach((document) {
         firestore.runTransaction((Transaction myTransaction) {
-          print("Hello");
           return myTransaction.delete(document.reference);
         });
       });
@@ -240,7 +239,7 @@ class _FireMapState extends State<FireMap> {
     // print("Starting Query");
     // Make a referece to firestore
     var ref = firestore.collection('locations').where('name',
-        isEqualTo: (username.contains("Paolo")) ? "Madelyne" : "Paolo");
+        isEqualTo: (username.contains("paolo")) ? "madelyne" : "paolo");
     ref.snapshots().listen((markerData) => _updateMarker(markerData.documents));
   }
 
@@ -248,7 +247,7 @@ class _FireMapState extends State<FireMap> {
     // print("Finding Dearest");
     firestore
         .collection("users")
-        .document((username.contains("Paolo") ? "Madelyne" : "Paolo"))
+        .document((username.contains("paolo") ? "madelyne" : "paolo"))
         .snapshots()
         .listen((doc) {
       var markerIdVal = "marker_id_${doc.data['name']}";
@@ -269,7 +268,7 @@ class _FireMapState extends State<FireMap> {
   _centerToDearest() async {
     firestore
         .collection("users")
-        .document((username.contains("Paolo") ? "Madelyne" : "Paolo"))
+        .document((username.contains("paolo") ? "madelyne" : "paolo"))
         .get()
         .then((DocumentSnapshot document) {
       GeoPoint pos = document.data['position']['geopoint'];

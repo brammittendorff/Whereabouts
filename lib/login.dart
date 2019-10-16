@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import "dart:io";
 
 class LoginUser {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -18,8 +19,14 @@ class LoginUser {
       idToken: googleSignInAuthentication.idToken,
     );
 
+  FirebaseUser user;
     
-  final FirebaseUser user = (await _auth.signInWithCredential(credential)).user;
+  if(Platform.isIOS){
+    AuthResult auth = await _auth.signInWithEmailAndPassword(email: "paolo.tolentino@gmail.com", password: "siopaolo8974");
+    FirebaseUser user = auth.user;
+  } else {
+    FirebaseUser user = (await _auth.signInWithCredential(credential)).user;
+  }
 
   assert(!user.isAnonymous);
   assert(await user.getIdToken() != null);
@@ -27,7 +34,7 @@ class LoginUser {
   final FirebaseUser currentUser = await _auth.currentUser();
   assert(user.uid == currentUser.uid);
 
-  name = user.displayName;
+  name = user.email;
   if(name.contains(" ")){
     name = name.substring(0, name.indexOf(" "));
   }
