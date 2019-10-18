@@ -9,8 +9,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:whereabouts/login.dart';
 
-void main() => runApp(MyApp());
-
+void main(){
+  runApp(MyApp());
+}
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
@@ -26,13 +27,18 @@ class FireMap extends StatefulWidget {
   _FireMapState createState() => _FireMapState();
 }
 
-class _FireMapState extends State<FireMap> {
+class _FireMapState extends State<FireMap>{
+  bool isFollowingUser = false;
+  bool isFollowingPartner;
+
   String username;
   BitmapDescriptor markerIconUser;
   BitmapDescriptor markerIconPartner;
 
   Location location = new Location();
-  LocationData currentLocation;
+  LocationData userCurrentLocation;
+  LocationData partnerCurrentLocation;
+
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
   MarkerId selectedMarker;
   int markerCount = 1;
@@ -42,9 +48,6 @@ class _FireMapState extends State<FireMap> {
 
   Firestore firestore = Firestore.instance;
   Geoflutterfire geo = Geoflutterfire();
-
-  Stream<dynamic> query;
-  StreamSubscription subscription;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +59,14 @@ class _FireMapState extends State<FireMap> {
           onMapCreated: _onMapCreated,
           mapType: MapType.normal,
           myLocationButtonEnabled: false,
+          onCameraMove: (_cameraLocation) {
+            if (_cameraLocation !=
+                CameraPosition(
+                    target: LatLng(userCurrentLocation.latitude,
+                        userCurrentLocation.longitude))) {
+              _stopFollowing();
+            }
+          },
           markers: Set<Marker>.of(markers.values),
         ),
         Positioned(
@@ -72,7 +83,7 @@ class _FireMapState extends State<FireMap> {
             ),
             shape: CircleBorder(),
             color: Colors.green,
-            onPressed: () => _animateToUser(),
+            onPressed: () => _followUser(),
           ),
         ),
         Positioned(
@@ -107,11 +118,16 @@ class _FireMapState extends State<FireMap> {
                 style: TextStyle(fontSize: 22),
               ),
             ),
-            onPressed: () => _centerToDearest(),
+            onPressed: () => _followPartner(),
           ),
         )
       ],
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -125,39 +141,48 @@ class _FireMapState extends State<FireMap> {
         markerIconPartner = (username.contains("paolo"))
             ? markerIconList.elementAt(1)
             : markerIconList.elementAt(0);
-        location.onLocationChanged().listen((location) async {
-          var markerId = MarkerId('marker_id_$username');
-          if (currentLocation != location && currentLocation != null) {
-            setState(() {
-              _addUserLocation();
-              // print("location changed!");
-              markers[markerId] = Marker(
-                markerId: markerId,
-                icon: markerIconUser,
-                position:
-                    LatLng(currentLocation.latitude, currentLocation.longitude),
-              );
-            });
-          }
-          _findDearest(markerIconPartner);
-          currentLocation = location;
+
+        location.onLocationChanged().listen((pos) {
+          userCurrentLocation = pos;
+          _addUserLocation();
+          _addPartnerLocation();
         });
         _startQuery();
       });
     });
-
     super.initState();
   }
 
-  void _onMapCreated(GoogleMapController controller) {
+  void _onMapCreated(GoogleMapController controller) async {
+    userCurrentLocation = await location.getLocation();
     setState(() {
       mapController = controller;
-      _animateToUser();
+      mapController.animateCamera(CameraUpdate.newLatLng(
+          LatLng(userCurrentLocation.latitude, userCurrentLocation.longitude)));
     });
   }
 
   _loginUser() async {
     username = await LoginUser().signInWithGoogle();
+  }
+
+  _followUser() {
+    setState(() {
+      isFollowingUser = true;
+    });
+  }
+
+  _followPartner() {
+    setState(() {
+      isFollowingPartner = true;
+    });
+  }
+
+  _stopFollowing() {
+    setState(() {
+      isFollowingUser = false;
+      isFollowingPartner = false;
+    });
   }
 
   _addMarker(BuildContext context) async {
@@ -167,12 +192,14 @@ class _FireMapState extends State<FireMap> {
       var markerId = MarkerId(markerIdVal);
       var marker = Marker(
           markerId: markerId,
-          position: LatLng(currentLocation.latitude, currentLocation.longitude),
+          position: LatLng(
+              userCurrentLocation.latitude, userCurrentLocation.longitude),
           icon: BitmapDescriptor.defaultMarker,
           infoWindow: InfoWindow(
-              title: placeDescription.elementAt(0),
-              snippet: placeDescription.elementAt(1),
-              onTap: () => _onInfoWindowPressed(markerId),));
+            title: placeDescription.elementAt(0),
+            snippet: placeDescription.elementAt(1),
+            onTap: () => _onInfoWindowPressed(markerId),
+          ));
       setState(() {
         markers[markerId] = marker;
       });
@@ -267,8 +294,8 @@ class _FireMapState extends State<FireMap> {
     ref.snapshots().listen((markerData) => _updateMarker(markerData.documents));
   }
 
-  _findDearest(BitmapDescriptor markerIcon) async {
-    // print("Finding Dearest");
+  _addPartnerLocation() async {
+    Map<String, double> locationMap = Map<String, double>();
     firestore
         .collection("users")
         .document((username.contains("paolo") ? "madelyne" : "paolo"))
@@ -277,11 +304,21 @@ class _FireMapState extends State<FireMap> {
       var markerIdVal = "marker_id_${doc.data['name']}";
       var markerId = MarkerId(markerIdVal);
       GeoPoint pos = doc.data['position']['geopoint'];
+
+      locationMap['latitude'] = pos.latitude;
+      locationMap['longitude'] = pos.longitude;
+
+      partnerCurrentLocation = LocationData.fromMap(locationMap);
       var marker = Marker(
           markerId: markerId,
-          icon: markerIcon,
+          icon: markerIconPartner,
           position: LatLng(pos.latitude, pos.longitude),
           infoWindow: InfoWindow.noText);
+
+      if (isFollowingPartner) {
+        mapController.animateCamera(
+            CameraUpdate.newLatLng(LatLng(pos.latitude, pos.longitude)));
+      }
 
       setState(() {
         markers[markerId] = marker;
@@ -289,28 +326,27 @@ class _FireMapState extends State<FireMap> {
     });
   }
 
-  _centerToDearest() async {
-    firestore
-        .collection("users")
-        .document((username.contains("paolo") ? "madelyne" : "paolo"))
-        .get()
-        .then((DocumentSnapshot document) {
-      GeoPoint pos = document.data['position']['geopoint'];
-      mapController.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-          target: LatLng(pos.latitude, pos.longitude), zoom: 20.0)));
-    });
-  }
-
-  _animateToUser() async {
-    var pos = await location.getLocation();
-    mapController.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-        target: LatLng(pos.latitude, pos.longitude), zoom: 20.0)));
-  }
-
   _addUserLocation() async {
+    var markerId = MarkerId('marker_id_$username');
+
+    if (isFollowingUser) {
+      print("following!");
+      mapController.moveCamera(CameraUpdate.newLatLng(
+          LatLng(userCurrentLocation.latitude, userCurrentLocation.longitude)));
+    }
+
+    setState(() {
+      markers[markerId] = Marker(
+        markerId: markerId,
+        icon: markerIconUser,
+        position:
+            LatLng(userCurrentLocation.latitude, userCurrentLocation.longitude),
+      );
+    });
+
     GeoFirePoint point = geo.point(
-        latitude: currentLocation.latitude,
-        longitude: currentLocation.longitude);
+        latitude: userCurrentLocation.latitude,
+        longitude: userCurrentLocation.longitude);
     return firestore
         .collection('users')
         .document(username)
@@ -403,11 +439,5 @@ class _FireMapState extends State<FireMap> {
             ],
           );
         });
-  }
-
-  @override
-  void dispose() {
-    subscription.cancel();
-    super.dispose();
   }
 }
