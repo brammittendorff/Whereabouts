@@ -54,7 +54,7 @@ class _FireMapState extends State<FireMap> {
           initialCameraPosition:
               CameraPosition(target: LatLng(14.6972207, 121.036092), zoom: 20),
           onMapCreated: _onMapCreated,
-          mapType: MapType.hybrid,
+          mapType: MapType.normal,
           myLocationButtonEnabled: false,
           markers: Set<Marker>.of(markers.values),
         ),
@@ -119,12 +119,12 @@ class _FireMapState extends State<FireMap> {
     //Wait for Sign In to Finish Before Tracking
     _loginUser().whenComplete(() {
       _getAssetIcon(context).whenComplete(() {
-      markerIconUser = (username.contains("paolo"))
-        ? markerIconList.elementAt(0)
-        : markerIconList.elementAt(1);
-      markerIconPartner = (username.contains("paolo"))
-        ? markerIconList.elementAt(1)
-        : markerIconList.elementAt(0);
+        markerIconUser = (username.contains("paolo"))
+            ? markerIconList.elementAt(0)
+            : markerIconList.elementAt(1);
+        markerIconPartner = (username.contains("paolo"))
+            ? markerIconList.elementAt(1)
+            : markerIconList.elementAt(0);
         location.onLocationChanged().listen((location) async {
           var markerId = MarkerId('marker_id_$username');
           if (currentLocation != location && currentLocation != null) {
@@ -169,6 +169,7 @@ class _FireMapState extends State<FireMap> {
           markerId: markerId,
           position: LatLng(currentLocation.latitude, currentLocation.longitude),
           icon: BitmapDescriptor.defaultMarker,
+          onTap: _onInfoWindowPressed(markerId),
           infoWindow: InfoWindow(
               title: placeDescription.elementAt(0),
               snippet: placeDescription.elementAt(1)));
@@ -192,7 +193,9 @@ class _FireMapState extends State<FireMap> {
           return myTransaction.delete(document.reference);
         });
       });
-      _startQuery();
+    });
+    setState(() {
+      markers.remove(markerId);
     });
   }
 
@@ -222,16 +225,20 @@ class _FireMapState extends State<FireMap> {
   }
 
   void _updateMarker(List<DocumentSnapshot> documentList) {
-    markers.forEach((markerId, marker) {
-      if (markerId.toString().contains("paolo") ||
-          markerId.toString().contains("madelyne")) {
+    List<MarkerId> _markId = List();
+    markers.forEach((id, marker) {
+      if (id.toString().contains("paolo") ||
+          id.toString().contains("madelyne")) {
       } else {
-        markers.remove(markerId);
+        _markId.add(id);
       }
     });
+
+    _markId.forEach((id) {
+      markers.remove(id);
+    });
+
     documentList.forEach((DocumentSnapshot document) {
-      markerCount++;
-      print(document.data['placeName']);
       var markerIdVal = "marker_id_$markerCount";
       var markerId = MarkerId(markerIdVal);
       GeoPoint pos = document.data['position']['geopoint'];
@@ -247,6 +254,7 @@ class _FireMapState extends State<FireMap> {
             }),
       );
       markers[markerId] = marker;
+      markerCount++;
     });
     setState(() {});
   }
@@ -345,9 +353,9 @@ class _FireMapState extends State<FireMap> {
         bitmapIcon.complete(bitmap);
       }));
       markerIcon = await bitmapIcon.future;
-      markerIconList.add(markerIcon);    
+      markerIconList.add(markerIcon);
     }
-    
+
     return markerIconList;
   }
 
