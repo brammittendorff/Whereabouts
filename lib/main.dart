@@ -169,7 +169,7 @@ class _FireMapState extends State<FireMap> {
           markerId: markerId,
           position: LatLng(currentLocation.latitude, currentLocation.longitude),
           icon: BitmapDescriptor.defaultMarker,
-          onTap: _onInfoWindowPressed(markerId),
+          onTap: (){_onInfoWindowPressed(markerId);},
           infoWindow: InfoWindow(
               title: placeDescription.elementAt(0),
               snippet: placeDescription.elementAt(1)));
