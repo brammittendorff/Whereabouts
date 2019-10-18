@@ -289,9 +289,8 @@ class _FireMapState extends State<FireMap> {
   }
 
   _animateToUser() async {
-    var pos = await location.getLocation();
     mapController.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-        target: LatLng(pos.latitude, pos.longitude), zoom: 17.0)));
+        target: LatLng(currentLocation.latitude, currentLocation.longitude), zoom: 17.0)));
   }
 
   _addUserLocation() async {
