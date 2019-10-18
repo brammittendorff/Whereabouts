@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:html';
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -120,6 +119,12 @@ class _FireMapState extends State<FireMap> {
     //Wait for Sign In to Finish Before Tracking
     _loginUser().whenComplete(() {
       _getAssetIcon(context).whenComplete(() {
+      markerIconUser = (username.contains("paolo"))
+        ? markerIconList.elementAt(0)
+        : markerIconList.elementAt(1);
+      markerIconPartner = (username.contains("paolo"))
+        ? markerIconList.elementAt(1)
+        : markerIconList.elementAt(0);
         location.onLocationChanged().listen((location) async {
           var markerId = MarkerId('marker_id_$username');
           if (currentLocation != location && currentLocation != null) {
@@ -284,13 +289,14 @@ class _FireMapState extends State<FireMap> {
         .then((DocumentSnapshot document) {
       GeoPoint pos = document.data['position']['geopoint'];
       mapController.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-          target: LatLng(pos.latitude, pos.longitude), zoom: 17.0)));
+          target: LatLng(pos.latitude, pos.longitude), zoom: 20.0)));
     });
   }
 
   _animateToUser() async {
+    var pos = await location.getLocation();
     mapController.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-        target: LatLng(currentLocation.latitude, currentLocation.longitude), zoom: 17.0)));
+        target: LatLng(pos.latitude, pos.longitude), zoom: 20.0)));
   }
 
   _addUserLocation() async {
@@ -339,15 +345,9 @@ class _FireMapState extends State<FireMap> {
         bitmapIcon.complete(bitmap);
       }));
       markerIcon = await bitmapIcon.future;
-      markerIconList.add(markerIcon);
+      markerIconList.add(markerIcon);    
     }
-    markerIconUser = (username.contains("paolo"))
-        ? markerIconList.elementAt(0)
-        : markerIconList.elementAt(1);
-    markerIconPartner = (username.contains("paolo"))
-        ? markerIconList.elementAt(1)
-        : markerIconList.elementAt(0);
-
+    
     return markerIconList;
   }
 
