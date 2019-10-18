@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>1085282642470-df9jknj2nssemoscv01o6ob4o95kgcu9.apps.googleusercontent.com</string>
+	<string>1085282642470-p3h3dgskf00ikeckpusapp2ntl053089.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.1085282642470-df9jknj2nssemoscv01o6ob4o95kgcu9</string>
+	<string>com.googleusercontent.apps.1085282642470-p3h3dgskf00ikeckpusapp2ntl053089</string>
 	<key>ANDROID_CLIENT_ID</key>
-	<string>1085282642470-rp674ocm18krj9cj2imv41cvuqgj24og.apps.googleusercontent.com</string>
+	<string>1085282642470-18bokkhbqmveajds5jgugsc15cc2fa64.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyC6avH3WPLm2VuqTJOAAem_JqPRkVEor0E</string>
 	<key>GCM_SENDER_ID</key>
@@ -15,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.solstella.findingdearest.whereabouts</string>
+	<string>com.solstella.finding-dearest.whereabouts</string>
 	<key>PROJECT_ID</key>
 	<string>tracking-dearest</string>
 	<key>STORAGE_BUCKET</key>
@@ -31,7 +31,7 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:1085282642470:ios:65d0db35887f1a1978d4e7</string>
+	<string>1:1085282642470:ios:1544a78b20f6164c78d4e7</string>
 	<key>DATABASE_URL</key>
 	<string>https://tracking-dearest.firebaseio.com</string>
 </dict>

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:html';
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -28,7 +29,8 @@ class FireMap extends StatefulWidget {
 
 class _FireMapState extends State<FireMap> {
   String username;
-  final LoginUser loginUser = LoginUser();
+  BitmapDescriptor markerIconUser;
+  BitmapDescriptor markerIconPartner;
 
   Location location = new Location();
   LocationData currentLocation;
@@ -54,6 +56,7 @@ class _FireMapState extends State<FireMap> {
               CameraPosition(target: LatLng(14.6972207, 121.036092), zoom: 20),
           onMapCreated: _onMapCreated,
           mapType: MapType.hybrid,
+          myLocationButtonEnabled: false,
           markers: Set<Marker>.of(markers.values),
         ),
         Positioned(
@@ -65,6 +68,7 @@ class _FireMapState extends State<FireMap> {
               child: Icon(
                 Icons.my_location,
                 color: Colors.white,
+                size: 30,
               ),
             ),
             shape: CircleBorder(),
@@ -83,6 +87,7 @@ class _FireMapState extends State<FireMap> {
               child: Icon(
                 Icons.add,
                 color: Colors.white,
+                size: 30,
               ),
             ),
             onPressed: () => _addMarker(context),
@@ -112,33 +117,30 @@ class _FireMapState extends State<FireMap> {
 
   @override
   void initState() {
-    //Sign in through google
-    _getAssetIcon(context).whenComplete(() {
-      BitmapDescriptor markerIconUser = (username.contains("paolo"))
-          ? markerIconList.elementAt(0)
-          : markerIconList.elementAt(1);
-      BitmapDescriptor markerIconDearest = (username.contains("paolo"))
-          ? markerIconList.elementAt(1)
-          : markerIconList.elementAt(0);
-      location.onLocationChanged().listen((location) async {
-        var markerId = MarkerId('marker_id_$username');
-        if (currentLocation != location && currentLocation != null) {
-          setState(() {
-            _addUserLocation();
-            // print("location changed!");
-            markers[markerId] = Marker(
-              markerId: markerId,
-              icon: markerIconUser,
-              position:
-                  LatLng(currentLocation.latitude, currentLocation.longitude),
-            );
-          });
-        }
-        _findDearest(markerIconDearest);
-        currentLocation = location;
+    //Wait for Sign In to Finish Before Tracking
+    _loginUser().whenComplete(() {
+      _getAssetIcon(context).whenComplete(() {
+        location.onLocationChanged().listen((location) async {
+          var markerId = MarkerId('marker_id_$username');
+          if (currentLocation != location && currentLocation != null) {
+            setState(() {
+              _addUserLocation();
+              // print("location changed!");
+              markers[markerId] = Marker(
+                markerId: markerId,
+                icon: markerIconUser,
+                position:
+                    LatLng(currentLocation.latitude, currentLocation.longitude),
+              );
+            });
+          }
+          _findDearest(markerIconPartner);
+          currentLocation = location;
+        });
+        _startQuery();
       });
-      _startQuery();
     });
+
     super.initState();
   }
 
@@ -149,9 +151,12 @@ class _FireMapState extends State<FireMap> {
     });
   }
 
+  _loginUser() async {
+    username = await LoginUser().signInWithGoogle();
+  }
+
   _addMarker(BuildContext context) async {
     List placeDescription = await _whereaboutsDescription(context);
-
     if (placeDescription != null) {
       var markerIdVal = 'marker_id_$markerCount';
       var markerId = MarkerId(markerIdVal);
@@ -212,7 +217,13 @@ class _FireMapState extends State<FireMap> {
   }
 
   void _updateMarker(List<DocumentSnapshot> documentList) {
-    markers.clear();
+    markers.forEach((markerId, marker) {
+      if (markerId.toString().contains("paolo") ||
+          markerId.toString().contains("madelyne")) {
+      } else {
+        markers.remove(markerId);
+      }
+    });
     documentList.forEach((DocumentSnapshot document) {
       markerCount++;
       print(document.data['placeName']);
@@ -306,10 +317,9 @@ class _FireMapState extends State<FireMap> {
     });
   }
 
-  Future<List> _getAssetIcon(
+  _getAssetIcon(
     BuildContext context,
   ) async {
-    username = await loginUser.signInWithGoogle();
     username = username.split(".").elementAt(0);
     BitmapDescriptor markerIcon;
     List userList = List();
@@ -332,6 +342,13 @@ class _FireMapState extends State<FireMap> {
       markerIcon = await bitmapIcon.future;
       markerIconList.add(markerIcon);
     }
+    markerIconUser = (username.contains("paolo"))
+        ? markerIconList.elementAt(0)
+        : markerIconList.elementAt(1);
+    markerIconPartner = (username.contains("paolo"))
+        ? markerIconList.elementAt(1)
+        : markerIconList.elementAt(0);
+
     return markerIconList;
   }
 
